@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#86c06c">
+    <title>时拼 - 时间记录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#86c06c',
+                            50: '#f2f8ee',
+                            100: '#e4f0dc',
+                            200: '#c8e1b9',
+                            300: '#a9d091',
+                            400: '#86c06c',
+                            500: '#6fa159',
+                            600: '#5a8548',
+                            700: '#476939',
+                            800: '#3a5530',
+                            900: '#31472a',
+                        },
+                        secondary: '#6fa159',
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body class="transition-colors duration-300" style="background-color:var(--bg-app);color:var(--text-primary)">
+
+<div id="toast-container"></div>
+
+<div id="app" class="max-w-[390px] h-[100dvh] mx-auto relative overflow-hidden shadow-2xl flex flex-col" style="background-color:var(--bg-surface)">
+
+    <!-- Header -->
+    <header id="header" class="shrink-0 h-14 z-20 px-4 flex items-center justify-between text-white" style="background:linear-gradient(135deg, #86c06c 0%, #6fa159 100%)"></header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-hidden flex flex-col pb-[56px]">
+        <!-- Record Page -->
+        <div id="record-page" class="flex flex-col h-full">
+            <div class="flex flex-1 overflow-hidden">
+                <div class="flex-1 overflow-y-auto" style="background-color:var(--bg-grid)">
+                    <div id="time-grid" class="grid time-grid grid-15min"></div>
+                </div>
+                <!-- Category Sidebar -->
+                <div class="w-[100px] flex flex-col shadow-[-2px_0_10px_rgba(0,0,0,0.03)] z-10" style="background-color:var(--bg-surface);border-left:1px solid var(--border-light)">
+                    <div id="category-list" class="flex-1 overflow-y-auto p-1.5 space-y-1.5 hide-scrollbar"></div>
+                    <div class="p-2 space-y-2" style="border-top:1px solid var(--border-light);background-color:var(--bg-subtle)">
+                        <button id="manage-category-btn" class="w-full py-2 text-xs font-medium rounded-lg transition active:scale-[0.97]" style="background:var(--bg-surface);color:var(--text-secondary);border:1px solid var(--border-default)">管理分类</button>
+                        <button id="export-data-btn" class="w-full py-2 text-xs font-medium rounded-lg transition active:scale-[0.97] bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">导出备份</button>
+                        <button id="import-data-btn" class="w-full py-2 text-xs font-medium rounded-lg transition active:scale-[0.97] bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">导入恢复</button>
+                        <input type="file" id="import-file" class="hidden" accept=".json">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diary Page -->
+        <div id="diary-page" class="h-full hidden px-4 py-3 overflow-y-auto" style="background-color:var(--bg-app)">
+            <div id="diary-timeline" class="space-y-4 pb-4"></div>
+        </div>
+
+        <!-- Stats Page -->
+        <div id="stats-page" class="h-full hidden px-4 py-3 overflow-y-auto" style="background-color:var(--bg-app)">
+            <div class="mb-4">
+                <div class="flex gap-2 mb-4">
+                    <div class="flex flex-1 rounded-lg overflow-hidden p-1 shadow-inner" style="background:var(--bg-subtle);border:1px solid var(--border-light)">
+                        <button class="stats-period-btn flex-1 py-1.5 rounded-md text-sm font-medium transition active:scale-[0.97]" style="background:var(--bg-surface);color:var(--text-primary)" data-period="week">周</button>
+                        <button class="stats-period-btn flex-1 py-1.5 rounded-md text-sm transition active:scale-[0.97]" style="color:var(--text-muted)" data-period="month">月</button>
+                        <button class="stats-period-btn flex-1 py-1.5 rounded-md text-sm transition active:scale-[0.97]" style="color:var(--text-muted)" data-period="year">年</button>
+                    </div>
+                    <select id="stats-filter" class="text-sm rounded-lg px-2 outline-none shadow-sm transition" style="background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-default)"></select>
+                </div>
+
+                <div class="flex items-center justify-between mb-4 app-card p-2.5">
+                    <button id="stats-prev" class="px-3 py-1 rounded-lg text-sm transition active:scale-[0.97]" style="color:var(--text-muted)">&lt;</button>
+                    <div id="stats-date-range" class="text-sm font-medium" style="color:var(--text-primary)"></div>
+                    <button id="stats-next" class="px-3 py-1 rounded-lg text-sm transition active:scale-[0.97]" style="color:var(--text-muted)">&gt;</button>
+                </div>
+
+                <div class="mb-6 app-card p-4">
+                    <h3 class="text-base font-semibold mb-4" style="color:var(--text-primary)" id="pie-title">分类时间占比</h3>
+                    <div class="chart-container" id="pie-container">
+                        <canvas id="pie-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="app-card p-4">
+                    <h3 class="text-base font-semibold mb-4" style="color:var(--text-primary)">时长趋势</h3>
+                    <div class="chart-container" id="line-container">
+                        <canvas id="line-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="mt-6 space-y-3">
+                    <h3 class="text-base font-semibold px-1" style="color:var(--text-primary)">数据详情</h3>
+                    <div id="stats-details" class="space-y-3 pb-4"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Tab Bar -->
+    <footer class="absolute bottom-0 left-0 right-0 max-w-[390px] mx-auto h-[56px] z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.04)]" style="background:var(--bg-surface);border-top:1px solid var(--border-light)">
+        <div class="flex h-full items-center justify-around">
+            <button class="tab-btn tab-active flex flex-col items-center justify-center gap-0.5 transition-colors" data-tab="record">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-[11px] font-medium">记录</span>
+            </button>
+            <button class="tab-btn flex flex-col items-center justify-center gap-0.5 transition-colors" data-tab="diary">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span class="text-[11px] font-medium">日记</span>
+            </button>
+            <button class="tab-btn flex flex-col items-center justify-center gap-0.5 transition-colors" data-tab="stats">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-6 4h16a2 2 0 002-2V6a2 2 0 00-2-2H4a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-[11px] font-medium">统计</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Category Management Modal -->
+    <div id="category-modal" class="fixed inset-0 z-40 hidden items-center justify-center" style="background:var(--overlay);backdrop-filter:blur(4px)">
+        <div class="rounded-2xl w-[90%] max-w-sm h-[80vh] flex flex-col shadow-2xl" style="background:var(--bg-surface)">
+            <div class="flex justify-between items-center p-4" style="border-bottom:1px solid var(--border-light)">
+                <h3 class="text-lg font-semibold" style="color:var(--text-primary)">分类管理</h3>
+                <button id="close-category-modal" class="text-2xl p-1 leading-none rounded-lg transition active:scale-[0.95]" style="color:var(--text-muted)">&times;</button>
+            </div>
+            <div id="manage-category-list" class="p-4 space-y-4 overflow-y-auto flex-1" style="background:var(--bg-subtle)"></div>
+            <div class="p-4 rounded-b-2xl" style="background:var(--bg-surface);border-top:1px solid var(--border-light)">
+                <button id="add-main-cat-btn" class="w-full py-3 text-white rounded-xl font-medium text-sm shadow-md transition-all active:scale-[0.98]" style="background:linear-gradient(135deg, #86c06c 0%, #6fa159 100%);box-shadow:0 4px 12px rgba(134,192,108,0.3)">+ 添加新大类</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Edit Modal -->
+    <div id="category-edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:var(--overlay);backdrop-filter:blur(4px)">
+        <div class="p-6 rounded-2xl w-[85%] max-w-[320px] space-y-5 shadow-2xl" style="background:var(--bg-surface)">
+            <h4 id="cat-edit-title" class="font-semibold text-lg" style="color:var(--text-primary)">添加新大类</h4>
+            <input type="hidden" id="cat-edit-id">
+            <div>
+                <label class="block text-sm mb-1.5 font-medium" style="color:var(--text-secondary)">名称</label>
+                <input type="text" id="cat-edit-name" class="w-full rounded-lg p-2.5 text-sm outline-none transition focus:ring-2 focus:ring-primary/50" style="background:var(--bg-subtle);color:var(--text-primary);border:1px solid var(--border-default)" placeholder="输入分类名称">
+            </div>
+            <div>
+                <label class="block text-sm mb-1.5 font-medium" style="color:var(--text-secondary)">颜色</label>
+                <div class="flex items-center gap-3 p-2.5 rounded-lg" style="background:var(--bg-subtle);border:1px solid var(--border-default)">
+                    <input type="color" id="cat-edit-color" class="w-10 h-10 border-0 p-0 rounded-md cursor-pointer" style="background:transparent">
+                    <span class="text-xs" style="color:var(--text-muted)">点击左侧方块选色</span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 mt-2" style="border-top:1px solid var(--border-light)">
+                <button id="cat-edit-cancel" class="px-5 py-2.5 rounded-xl text-sm font-medium transition active:scale-[0.97]" style="background:var(--bg-subtle);color:var(--text-secondary)">取消</button>
+                <button id="cat-edit-save" class="px-5 py-2.5 text-white rounded-xl text-sm font-medium shadow-md transition active:scale-[0.97]" style="background:linear-gradient(135deg, #86c06c 0%, #6fa159 100%)">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Mode Modal -->
+    <div id="import-mode-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background:var(--overlay);backdrop-filter:blur(4px)">
+        <div class="p-5 rounded-2xl w-[85%] max-w-[320px] space-y-4 shadow-2xl" style="background:var(--bg-surface)">
+            <h4 class="font-semibold text-base" style="color:var(--text-primary)">导入数据</h4>
+            <div class="text-sm space-y-2" style="color:var(--text-secondary)" id="import-mode-desc">
+                选择导入模式：合并将保留现有数据，覆盖将清空当前所有数据。
+            </div>
+            <div class="flex justify-end gap-3 pt-3" style="border-top:1px solid var(--border-light)">
+                <button id="import-mode-cancel" class="px-4 py-2 rounded-xl text-sm font-medium transition active:scale-[0.97]" style="background:var(--bg-subtle);color:var(--text-secondary)">取消</button>
+                <button id="import-mode-merge" class="px-4 py-2 text-white rounded-xl text-sm font-medium shadow-md transition active:scale-[0.97]" style="background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)">合并数据</button>
+                <button id="import-mode-overwrite" class="px-4 py-2 rounded-xl text-sm font-medium transition active:scale-[0.97] bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">覆盖数据</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>

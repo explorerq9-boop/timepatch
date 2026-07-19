@@ -1,0 +1,19 @@
+{
+  "name": "时拼 - 时间记录",
+  "short_name": "时拼",
+  "description": "简洁高效的时间追踪应用，用15分钟粒度记录每一天",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8fafc",
+  "theme_color": "#86c06c",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

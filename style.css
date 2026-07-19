@@ -1,0 +1,63 @@
+:root {
+            --bg-app: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-grid: #f8fafc;
+            --bg-subtle: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border-light: #f1f5f9;
+            --border-default: #e2e8f0;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-modal: 0 25px 50px -12px rgba(0,0,0,0.25);
+            --cell-bg: #ffffff;
+            --overlay: rgba(15, 23, 42, 0.5);
+        }
+        .dark {
+            --bg-app: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-grid: #0f172a;
+            --bg-subtle: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border-light: #1e293b;
+            --border-default: #334155;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.2);
+            --shadow-modal: 0 25px 50px -12px rgba(0,0,0,0.5);
+            --cell-bg: #1e293b;
+            --overlay: rgba(0, 0, 0, 0.7);
+        }
+        .time-grid { grid-template-rows: repeat(24, minmax(0, 1fr)); height: calc(100vh - 7.5rem); gap: 1px; padding: 3px; background-color: var(--bg-grid); }
+        .grid-15min { grid-template-columns: 46px repeat(4, minmax(0, 1fr)); }
+        .time-cell { width: 100%; height: 100%; background: var(--cell-bg); border-radius: 3px; transition: all 0.15s ease; cursor: pointer; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03); }
+        .dark .time-cell { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03); }
+        .time-cell:hover { filter: brightness(0.95); }
+        .time-cell-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; padding: 1px; box-sizing: border-box; word-break: break-all; line-height: 1.1; text-align: center; }
+        .cell-selected { z-index: 10; transform: scale(1.08); box-shadow: 0 0 0 2px rgba(134,192,108,0.7), 0 4px 12px rgba(0,0,0,0.1); border-radius: 4px; }
+        .chart-container { width: 100%; height: 260px; margin-bottom: 1rem; }
+        .app-card { background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-light); box-shadow: var(--shadow-card); }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        *:focus-visible { outline: 2px solid #86c06c; outline-offset: 2px; }
+
+        /* Toast */
+        #toast-container { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; width: calc(100% - 2rem); max-width: 360px; }
+        .toast { pointer-events: auto; display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-size: 14px; font-weight: 500; animation: toastSlideIn 0.3s ease-out; max-width: 100%; }
+        .toast-removing { animation: toastSlideOut 0.25s ease-in forwards; }
+        .toast-success { background: #22c55e; color: #fff; }
+        .toast-error { background: #ef4444; color: #fff; }
+        .toast-info { background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-default); }
+        .dark .toast-info { background: #334155; color: #f1f5f9; border-color: #475569; }
+        .toast-undo { background: #1e293b; color: #fff; }
+        .dark .toast-undo { background: #f1f5f9; color: #0f172a; }
+        @keyframes toastSlideIn { from { opacity: 0; transform: translateY(-12px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastSlideOut { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-12px) scale(0.95); } }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
