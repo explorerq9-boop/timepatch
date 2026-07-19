@@ -73,6 +73,10 @@ function showToast(message, type, duration) {
 
 function showUndoToast(message, undoCallback) {
     var container = document.getElementById('toast-container');
+    // Remove any existing undo toasts to prevent stacking
+    var existingToasts = container.querySelectorAll('.toast-undo');
+    existingToasts.forEach(function(el) { el.remove(); });
+
     var toast = document.createElement('div');
     toast.className = 'toast toast-undo';
     toast.innerHTML = '<span style="flex:1">' + message + '</span><button class="undo-action font-bold px-2 py-1 rounded-lg hover:bg-white/20 transition active:scale-95 whitespace-nowrap" style="color:#86c06c">撤销</button><button class="dismiss-action ml-1 opacity-60 hover:opacity-100 transition text-lg leading-none">&times;</button>';
@@ -667,6 +671,7 @@ function initMultiSelect() {
     });
     grid.addEventListener('mousemove', function(e) { if (appData.isDragging) dragHandler(e, false); });
     var justDragged = false;
+    var justTouched = false;
     grid.addEventListener('mouseup', function() { 
         if (appData.isDragging) {
             justDragged = true;
@@ -676,7 +681,7 @@ function initMultiSelect() {
         }
     });
     grid.addEventListener('click', function(e) {
-        if (justDragged) return;
+        if (justDragged || justTouched) return;
         var c = e.target.closest('.time-cell');
         if (c && !appData.isDragging) { appData.selectedCells = [c]; handleSelectedCells(); resetSelectedCells(); }
     });
@@ -688,7 +693,17 @@ function initMultiSelect() {
         if (c) { appData.isDragging = true; appData.startCell = c; appData.selectedCells = [c]; c.classList.add('cell-selected'); }
     }, { passive: true });
     grid.addEventListener('touchmove', function(e) { if (appData.isDragging) { dragHandler(e, true); e.preventDefault(); } }, { passive: false });
-    grid.addEventListener('touchend', function() { if (appData.isDragging && appData.selectedCells.length > 0) handleSelectedCells(); resetSelectedCells(); });
+    grid.addEventListener('touchend', function(e) { 
+        if (appData.isDragging) {
+            justTouched = true;
+            if (appData.selectedCells.length > 0) {
+                handleSelectedCells();
+                if (e.cancelable) e.preventDefault(); // prevent synthetic click on mobile
+            }
+            resetSelectedCells(); 
+            setTimeout(function() { justTouched = false; }, 400); // 400ms ignores mobile 300ms click delay
+        }
+    });
 }
 
 function handleSelectedCells() {
