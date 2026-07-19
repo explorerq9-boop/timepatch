@@ -1,4 +1,4 @@
-var CACHE_NAME = 'timepatch-v2';
+var CACHE_NAME = 'timepatch-v3';
 var ASSETS_TO_CACHE = [
     './index.html',
     './manifest.json',

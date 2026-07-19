@@ -1081,14 +1081,30 @@ function initApp() {
     initEventListeners();
     initKeyboardShortcuts();
 
-    // Service Worker registration
+    // Service Worker registration & Auto-update mechanism
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('./sw.js').then(function(reg) {
                 console.log('SW registered:', reg.scope);
+                
+                reg.addEventListener('updatefound', function() {
+                    var newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showToast('发现新版本，正在自动更新...', 'info', 3000);
+                        }
+                    });
+                });
             }).catch(function(err) {
                 console.log('SW registration failed:', err);
             });
+        });
+
+        var refreshing;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
         });
     }
 }
